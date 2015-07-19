@@ -2,6 +2,7 @@
 
 namespace Bican\Roles\Traits;
 
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -29,7 +30,11 @@ trait HasRoleAndPermission
      */
     public function roles()
     {
-        return $this->belongsToMany(config('roles.models.role'))->withTimestamps();
+        return $this->belongsToMany(config('roles.models.role'))
+            ->wherePivot('valid_at', '<', Carbon::now())
+            ->wherePivot('expires_at', '>', Carbon::now())
+            ->withPivot('valid_at', 'expires_at', 'id')
+            ->withTimestamps();
     }
 
     /**
@@ -111,9 +116,25 @@ trait HasRoleAndPermission
      * @param int|\Bican\Roles\Models\Role $role
      * @return null|bool
      */
-    public function attachRole($role)
+    public function attachRole($role, $attributes = [])
     {
-        return (!$this->getRoles()->contains($role)) ? $this->roles()->attach($role) : true;
+        if(!array_has($attributes, 'valid_at'))
+        {
+            $attributes['valid_at'] = Carbon::now();
+        }
+        else {
+            $attributes['valid_at'] = Carbon::createFromFormat('Y-m-d', $attributes['valid_at']);
+        }
+
+        if(!array_has($attributes, 'expires_at'))
+        {
+            $attributes['expires_at'] = Carbon::now()->addYears(100);
+        }
+        else {
+            $attributes['expires_at'] = Carbon::createFromFormat('Y-m-d', $attributes['expires_at']);
+        }
+
+        $this->roles()->attach($role, $attributes);
     }
 
     /**
