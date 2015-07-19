@@ -18,6 +18,8 @@ class CreatePermissionUserTable extends Migration
             $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('cascade');
             $table->integer('user_id')->unsigned()->index();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->date('valid_at')->default(Carbon::now()->format('Y/m/d'));
+            $table->date('expires_at')->default(Carbon::now()->addYear(100)->format('Y/m/d'));
             $table->timestamps();
         });
     }

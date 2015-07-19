@@ -2,29 +2,57 @@
 
 namespace Bican\Roles\Traits;
 
-trait PermissionHasRelations
+trait RoleHasRelations
 {
     /**
-     * Permission belongs to many roles.
+     * Role belongs to many permissions.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function roles()
+    public function permissions()
     {
-        return $this->belongsToMany(config('roles.models.role'))
-            ->wherePivot('valid_at', '>', Carbon::now())
-            ->wherePivot('expires_at', '<', Carbon::now())
-            ->withPivot('valid_at', 'expires_at')
-            ->withTimestamps();
+        return $this->belongsToMany(config('roles.models.permission'))->withTimestamps();
     }
 
     /**
-     * Permission belongs to many users.
+     * Role belongs to many users.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function users()
     {
         return $this->belongsToMany(config('auth.model'))->withTimestamps();
+    }
+
+    /**
+     * Attach permission to a role.
+     *
+     * @param int|\Bican\Roles\Models\Permission $permission
+     * @return int|bool
+     */
+    public function attachPermission($permission)
+    {
+        return (!$this->permissions()->get()->contains($permission)) ? $this->permissions()->attach($permission) : true;
+    }
+
+    /**
+     * Detach permission from a role.
+     *
+     * @param int|\Bican\Roles\Models\Permission $permission
+     * @return int
+     */
+    public function detachPermission($permission)
+    {
+        return $this->permissions()->detach($permission);
+    }
+
+    /**
+     * Detach all permissions.
+     *
+     * @return int
+     */
+    public function detachAllPermissions()
+    {
+        return $this->permissions()->detach();
     }
 }

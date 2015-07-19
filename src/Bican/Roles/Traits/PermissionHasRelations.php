@@ -11,7 +11,11 @@ trait PermissionHasRelations
      */
     public function roles()
     {
-        return $this->belongsToMany(config('roles.models.role'))->withTimestamps();
+        return $this->belongsToMany(config('roles.models.role'))
+            ->wherePivot('valid_at', '>', Carbon::now())
+            ->wherePivot('expires_at', '<', Carbon::now())
+            ->withPivot('valid_at', 'expires_at')
+            ->withTimestamps();
     }
 
     /**
